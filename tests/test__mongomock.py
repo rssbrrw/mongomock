@@ -4794,6 +4794,15 @@ class MongoClientAggregateTest(_CollectionComparisonTest):
         ]
         self.cmp.compare_ignore_order.aggregate(pipeline)
 
+    def test__zip(self):
+        self.cmp.do.delete_many({})
+        data = [
+            {'list': [1, 2, 3]},
+        ]
+        self.cmp.do.insert_many(data)
+        pipeline = [{'$addFields': {'zipped': {'$zip': {'inputs': ['$list', [1, 2, 3]]}}}}]
+        self.cmp.compare.aggregate(pipeline)
+
 
 @skipIf(not helpers.HAVE_PYMONGO, 'pymongo not installed')
 class MongoClientGraphLookupTest(_CollectionComparisonTest):

@@ -829,6 +829,24 @@ class _Parser:
                 start = 0
             return array_value[start:stop]
 
+        if operator == '$zip':
+            if not isinstance(value, dict):
+                raise OperationFailure('$zip only supports an object as its argument')
+
+            if 'inputs' not in value:
+                raise OperationFailure("Missing 'inputs' parameter to $zip")
+
+            if not isinstance(value['inputs'], (list, tuple)):
+                raise OperationFailure(
+                    "The 'inputs' parameter to $zip must be an array, "
+                    f"but is of type: {type(value['inputs'])}"
+                )
+
+            if value.get('useLongestLength', False):
+                raise OperationFailure("'useLongestLength' parameter to $zip is not supported")
+
+            return list(zip(*[self.parse(val) for val in value['inputs']]))
+
         raise NotImplementedError(
             f"Although '{operator}' is a valid array operator for the "
             f'aggregation pipeline, it is currently not implemented '
