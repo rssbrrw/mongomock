@@ -275,7 +275,9 @@ class _Parser:
                 return self._handle_type_operator(k, v)
             if k in boolean_operators:
                 return self._handle_boolean_operator(k, v)
-            if k in text_search_operators + projection_operators + object_operators:
+            if k in object_operators:
+                return self._handle_object_operator(k, v)
+            if k in text_search_operators + projection_operators:
                 raise NotImplementedError(
                     f"'{k}' is a valid operation but it is not supported by Mongomock yet."
                 )
@@ -345,6 +347,22 @@ class _Parser:
             f'aggregation pipeline, it is currently not implemented'
             f' in Mongomock.'
         )
+
+    def _handle_object_operator(self, operator, values):
+        if operator == '$mergeObjects':
+            if not isinstance(values, (list, tuple)):
+                raise OperationFailure(
+                    f"Parameter to {operator} must evaluate to a list, got '{type(values)}'"
+                )
+            parsed_list = list(self.parse_many(values))
+            merged = {}
+            for parsed_item in parsed_list:
+                if parsed_item is not None and not isinstance(parsed_item, dict):
+                    raise OperationFailure(
+                        f'{operator} only supports objects, not {type(parsed_item)}'
+                    )
+                merged = {**merged, **(parsed_item or {})}
+            return merged
 
     def _handle_arithmetic_operator(self, operator, values):
         if operator in unary_arithmetic_operators:

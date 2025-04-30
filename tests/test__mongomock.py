@@ -4803,6 +4803,34 @@ class MongoClientAggregateTest(_CollectionComparisonTest):
         pipeline = [{'$addFields': {'zipped': {'$zip': {'inputs': ['$list', [1, 2, 3]]}}}}]
         self.cmp.compare.aggregate(pipeline)
 
+    def test__merge_objects(self):
+        self.cmp.do.delete_many({})
+        data = [
+            {
+                'one': {'a': 1},
+                'two': {'b': 2},
+            },
+            {
+                'one': {'a': 1},
+                'two': {'a': 2},
+            },
+            {
+                'one': {'a': 1},
+                'two': {'a': None},
+            },
+            {
+                'one': {'a': None},
+                'two': {'a': 1},
+            },
+            {
+                'one': None,
+                'two': {'a': 1},
+            },
+        ]
+        self.cmp.do.insert_many(data)
+        pipeline = [{'$addFields': {'merged': {'$mergeObjects': ['$one', '$two']}}}]
+        self.cmp.compare.aggregate(pipeline)
+
 
 @skipIf(not helpers.HAVE_PYMONGO, 'pymongo not installed')
 class MongoClientGraphLookupTest(_CollectionComparisonTest):
